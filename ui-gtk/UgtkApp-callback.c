@@ -549,6 +549,9 @@ static void node_updated (UgetNode* child)
 	UgtkApp*     app;
 
 	node = child->parent;
+	if(node == NULL) {
+		return;
+	}
 	app = node->control->notifier->data;
 	if (node == (UgetNode*) app->traveler.category.model->root) {
 		// category changed
