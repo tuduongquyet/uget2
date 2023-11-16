@@ -1,10 +1,13 @@
-AC_INIT(uget, 2.2.3)
+AC_INIT([uget],[2.2.3])
 
 ## Use automake (add automake to autogen.sh)
 AM_INIT_AUTOMAKE
 
 ## --- Use config.h (autogen.sh add autoheader)
 AC_CONFIG_HEADERS([config.h])
+
+## --- Determine host
+AC_CANONICAL_HOST
 
 ## --- Determine a C compiler to use.
 AC_PROG_CC
@@ -29,7 +32,7 @@ AC_CHECK_FUNCS([ftruncate])
 
 ## ----------------------------------------------
 ## L10N  (add intltoolize to autogen.sh)
-AC_PROG_INTLTOOL
+IT_PROG_INTLTOOL
 ## replace ALL_LINGUAS with po/LINGUAS
 # ALL_LINGUAS=""
 GETTEXT_PACKAGE="$PACKAGE"
@@ -93,7 +96,7 @@ AC_SUBST(CURL_LIBS)
 ## GnuTLS
 AC_ARG_WITH(
 	[gnutls],
-	AC_HELP_STRING([--with-gnutls[=@<:@no/auto/yes@:>@]], [Enable GnuTLS support. (default is auto)]),
+	AS_HELP_STRING([--with-gnutls[=@<:@no/auto/yes@:>@]],[Enable GnuTLS support. (default is auto)]),
 	[with_gnutls="$withval"],
 	[with_gnutls="no"]
 )
@@ -131,7 +134,7 @@ fi
 ## OpenSSL
 AC_ARG_WITH(
 	[openssl],
-	AC_HELP_STRING([--with-openssl[=@<:@no/yes@:>@]], [Enable OpenSSL support.]),
+	AS_HELP_STRING([--with-openssl[=@<:@no/yes@:>@]],[Enable OpenSSL support.]),
 	[with_openssl="$withval"],
 	[with_openssl="yes"]
 )
@@ -148,7 +151,7 @@ fi
 ## libnotify
 AC_ARG_ENABLE(
 	[notify],
-	AC_HELP_STRING([--disable-notify], [Disable libnotify support.]),
+	AS_HELP_STRING([--disable-notify],[Disable libnotify support.]),
 	[enable_notify="$enableval"],
 	[enable_notify="yes"]
 )
@@ -184,7 +187,7 @@ fi
 ## gstreamer
 AC_ARG_ENABLE(
 	[gstreamer],
-	AC_HELP_STRING([--disable-gstreamer], [Disable GStreamer audio support.]),
+	AS_HELP_STRING([--disable-gstreamer],[Disable GStreamer audio support.]),
 	[enable_gstreamer="$enableval"],
 	[enable_gstreamer="yes"]
 )
@@ -211,7 +214,7 @@ fi
 ## libpwmd
 AC_ARG_ENABLE(
 	[pwmd],
-	AC_HELP_STRING([--enable-pwmd], [Enable pwmd support.]),
+	AS_HELP_STRING([--enable-pwmd],[Enable pwmd support.]),
 	[enable_pwmd="$enableval"],
 	[enable_pwmd="no"]
 )
@@ -225,7 +228,7 @@ AM_CONDITIONAL([WITH_LIBPWMD],  [test "x$enable_pwmd" = "xyes"])
 ## RSS Notify
 AC_ARG_ENABLE(
 	[rss-notify],
-	AC_HELP_STRING([--disable-rss-notify], [Disable RSS Notify.]),
+	AS_HELP_STRING([--disable-rss-notify],[Disable RSS Notify.]),
 	[enable_rss_notify="$enableval"],
 	[enable_rss_notify="yes"]
 )
@@ -237,13 +240,42 @@ fi
 ## UNIX Domain Socket
 AC_ARG_ENABLE(
 	[unix-socket],
-	AC_HELP_STRING([--enable-unix-socket], [Enable UNIX Domain Socket.]),
+	AS_HELP_STRING([--enable-unix-socket],[Enable UNIX Domain Socket.]),
 	[enable_unix_socket="$enableval"],
 	[enable_unix_socket="no"]
 )
 if test "x$enable_unix_socket" = "xyes"; then
   AC_DEFINE(USE_UNIX_DOMAIN_SOCKET, 1, [Define to 1 to use UNIX Domain Socket.])
 fi
+
+
+## -----------------
+## Checking for macOS
+case "$host_os" in
+  darwin*|ios*)
+		OBJ_CPPFLAGS="-x objective-c -Wall"
+		OBJ_LDFLAGS="-framework CoreFoundation -framework AppKit -framework Cocoa"
+		OBJ_LIBS="-lobjc"
+	;;
+	*)
+		OBJ_CPPFLAGS=""
+		OBJ_LDFLAGS=""
+		OBJ_LIBS=""
+	;;
+esac
+AC_SUBST(OBJ_CPPFLAGS)
+AC_SUBST(OBJ_LDFLAGS)
+AC_SUBST(OBJ_LIBS)
+
+## -----------------
+## gtk-mac-integration
+case "$host_os" in
+  darwin*|ios*)
+  PKG_CHECK_MODULES(MAC_INTEGRATION, gtk-mac-integration-gtk3)
+  ;;
+esac
+AC_SUBST(MAC_INTEGRATION_CFLAGS)
+AC_SUBST(MAC_INTEGRATION_LIBS)
 
 ## ----------------------------------------------
 ## output

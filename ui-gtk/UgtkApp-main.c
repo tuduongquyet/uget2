@@ -103,6 +103,29 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 #include <UgFileUtil.h>
 #include <UgtkApp.h>
 
+/* GTKMACINTEGRATION uses Carbon, which isn't available for 64-bit builds. */
+#ifdef __x86_64__
+#undef GTKMACINTEGRATION
+# ifndef GTKOSXAPPLICATION
+#define GTKOSXAPPLICATION
+# endif
+#endif //__x86_64__
+
+#if GTK_CHECK_VERSION (2, 90, 7)
+	#include <gdk/gdkkeysyms-compat.h>
+#else
+	#include <gdk/gdkkeysyms.h>
+#endif
+
+#ifdef GTKMACINTEGRATION
+	#include "gtk-mac-menu.h"
+	#include "gtk-mac-dock.h"
+	#include "gtk-mac-bundle.h"
+#endif
+#ifdef GTKOSXAPPLICATION
+	#include "gtkosxapplication.h"
+#endif
+
 // OpenSSL
 #ifdef USE_OPENSSL
 #include <UgThread.h>
@@ -188,6 +211,7 @@ gboolean  gst_inited  = FALSE;
 // ----------------------------------------------------------------------------
 // SIGTERM
 UgtkApp*  ugtk_app;
+UgetRpc*  rpc;
 gboolean  ugtk_quitting = FALSE;
 
 static void sys_signal_handler (int sig)
@@ -237,13 +261,61 @@ static void sys_set_sigaction ()
 }
 */
 
+#ifdef GTKOSXAPPLICATION
+static void
+app_active_cb (GtkosxApplication* app, gboolean* data)
+{
+	g_print ("Application became %s\n", *data ? "active" : "inactive");
+}
+
+static gboolean
+app_should_quit_cb (GtkosxApplication *app, gpointer data)
+{
+//	static gboolean abort = TRUE;
+//	gboolean answer;
+//	answer = abort;
+//	abort = FALSE;
+//	g_print ("Application has been requested to quit, %s\n", answer ? "but no!" :
+//															 "it's OK.");
+//	return answer;
+	return FALSE;
+}
+
+static void
+app_will_quit_cb (GtkosxApplication *app, gpointer data)
+{
+	g_print ("Quitting Now\n");
+	// avoid crash when program re-enter signal handler.
+	ugtk_quitting = TRUE;
+	// clear/free other resource
+	uget_app_clear_attachment ((UgetApp*) ugtk_app);
+	ugtk_app_final (ugtk_app);
+	g_free (ugtk_app);
+
+	// sleep 2 second to wait thread and shutdown RPC
+	g_usleep (1000000);
+	uget_rpc_free (rpc);
+	g_usleep (1000000);
+
+	// libnotify
+#ifdef HAVE_LIBNOTIFY
+	if (notify_is_initted ())
+		notify_uninit ();
+#endif
+	// SSL
+#if defined USE_GNUTLS || defined USE_OPENSSL
+	kill_locks ();
+#endif
+	gtk_main_quit ();
+}
+
+#endif //GTKOSXAPPLICATION
+
 // ----------------------------------------------------------------------------
 // main ()
 
 int  main (int argc, char** argv)
 {
-	UgetRpc*  rpc;
-
 	// I18N
 	bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
@@ -285,7 +357,20 @@ int  main (int argc, char** argv)
 		return EXIT_SUCCESS;
 	}
 
-	// GTK+
+#ifdef GTKOSXAPPLICATION
+	GtkosxApplication *theApp = g_object_new (GTKOSX_TYPE_APPLICATION, NULL);
+	gboolean falseval = FALSE;
+	gboolean trueval = TRUE;
+	g_signal_connect (theApp, "NSApplicationDidBecomeActive",
+					  G_CALLBACK (app_active_cb), &trueval);
+	g_signal_connect (theApp, "NSApplicationWillResignActive",
+					  G_CALLBACK (app_active_cb), &falseval);
+	g_signal_connect (theApp, "NSApplicationBlockTermination",
+					  G_CALLBACK (app_should_quit_cb), NULL);
+	g_signal_connect (theApp, "NSApplicationWillTerminate",
+					  G_CALLBACK (app_will_quit_cb), NULL);
+#endif
+		// GTK+
 	gtk_init (&argc, &argv);
 	// SSL
 #if defined USE_GNUTLS || defined USE_OPENSSL

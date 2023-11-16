@@ -4,7 +4,8 @@ uget_gtk_CPPFLAGS = \
 	-DUG_DATADIR='"$(datadir)"'  \
 	-I$(top_srcdir)/ui-gtk    \
 	-I$(top_srcdir)/uget      \
-	-I$(top_srcdir)/uglib
+	-I$(top_srcdir)/uglib			\
+	@OBJ_CPPFLAGS@
 
 uget_gtk_CFLAGS = \
 	@PTHREAD_CFLAGS@        \
@@ -16,9 +17,10 @@ uget_gtk_CFLAGS = \
 	@LIBNOTIFY_CFLAGS@      \
 	@APP_INDICATOR_CFLAGS@  \
 	@GSTREAMER_CFLAGS@      \
-	@LIBPWMD_CFLAGS@
+	@LIBPWMD_CFLAGS@				\
+	@MAC_INTEGRATION_CFLAGS@	
 
-uget_gtk_LDFLAGS  = @LFS_LDFLAGS@
+uget_gtk_LDFLAGS  = @LFS_LDFLAGS@ @OBJ_LDFLAGS@
 
 uget_gtk_LDADD = \
 	$(top_builddir)/uget/libuget.a    \
@@ -31,7 +33,9 @@ uget_gtk_LDADD = \
 	@LIBNOTIFY_LIBS@      \
 	@APP_INDICATOR_LIBS@  \
 	@GSTREAMER_LIBS@      \
-	@LIBPWMD_LIBS@
+	@LIBPWMD_LIBS@        \
+	@MAC_INTEGRATION_LIBS@ \
+	@OBJ_LIBS@
 
 uget_gtk_SOURCES = \
 	UgtkUtil.c  UgtkConfig.c  UgtkSetting.c  \
