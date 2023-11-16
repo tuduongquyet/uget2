@@ -39,6 +39,27 @@
 
 #include <glib/gi18n.h>
 
+#ifdef GDK_WINDOWING_QUARTZ
+/* GTKMACINTEGRATION uses Carbon, which isn't available for 64-bit builds. */
+#if defined(__x86_64__) || defined(__aarch64__)
+#undef GTKMACINTEGRATION
+# ifndef GTKOSXAPPLICATION
+#define GTKOSXAPPLICATION
+# endif //GTKOSXAPPLICATION
+#endif //__x86_64__ || __aarch64__
+
+#ifdef GTKMACINTEGRATION
+    #include <gtk-mac-menu.h>
+    #include <gtk-mac-dock.h>
+    #include <gtk-mac-bundle.h>
+#endif
+#ifdef GTKOSXAPPLICATION
+    #include <gtkosxapplication.h>
+#endif
+#include "CoreFoundation/CoreFoundation.h"
+
+#endif
+
 // UgtkFileMenu
 static void ugtk_menubar_file_init (UgtkMenubar* menubar, GtkAccelGroup* accel_group)
 {
@@ -767,5 +788,39 @@ void ugtk_menubar_init_ui (UgtkMenubar* menubar, GtkAccelGroup* accel_group)
 	ugtk_menubar_category_init (menubar);
 	ugtk_menubar_download_init (menubar, accel_group);
 	ugtk_menubar_help_init (menubar);
+
+#ifdef GDK_WINDOWING_QUARTZ
+#ifdef GTKMACINTEGRATION
+	GtkMacMenuGroup *group;
+#endif //GTKMACINTEGRATION
+#ifdef GTKOSXAPPLICATION
+	GtkosxApplication *app = gtkosx_application_get();
+#endif //GTKOSXAPPLICATION
+
+    gtk_widget_hide(menubar->self);
+    gtkosx_application_set_menu_bar(app, GTK_MENU_SHELL(menubar->self));
+    gtkosx_application_set_use_quartz_accelerators(app, TRUE);
+    gtkosx_application_ready(app);
+//    gtkosx_application_set_dock_icon_pixbuf(theApp, gdk_pixbuf_new_from_file(UG_DATADIR "/images/workrave.png", NULL);
+
+//	gtk_widget_hide(menubar->self);
+
+//	GtkWidget *sep;
+//	gtkosx_application_set_menu_bar (theApp, GTK_MENU_SHELL (menubar->self));
+//	gtkosx_application_set_about_item  (theApp, items->about_item);
+//	sep = gtk_separator_menu_item_new ();
+//	g_object_ref (sep);
+//	gtkosx_application_insert_app_menu_item  (theApp, sep, 1);
+//	gtkosx_application_insert_app_menu_item  (theApp,
+//											  items->preferences_item,
+//											  2);
+//	sep = gtk_separator_menu_item_new ();
+//	g_object_ref (sep);
+//	gtkosx_application_insert_app_menu_item  (theApp, sep, 3);
+//
+//	gtkosx_application_set_help_menu (theApp, GTK_MENU_ITEM (items->help_menu));
+//	gtkosx_application_set_window_menu (theApp, GTK_MENU_ITEM (items->window_menu));
+
+#endif
 }
 

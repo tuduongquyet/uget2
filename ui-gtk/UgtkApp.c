@@ -1297,6 +1297,29 @@ static GtkWidget*  create_file_chooser (GtkWindow* parent,
 	return dialog;
 }
 
+static GtkFileChooserNative*  create_native_file_chooser (GtkWindow* parent,
+										GtkFileChooserAction action,
+										const gchar* title,
+										const gchar* filter_name,
+										const gchar* mine_type)
+{
+	GtkFileChooserNative*      dialog;
+	GtkFileFilter*  filter;
+
+	dialog = gtk_file_chooser_native_new (title,
+										parent,
+										action,
+										"_Open",
+										"_Cancel");
+	if (filter_name) {
+		filter = gtk_file_filter_new ();
+		gtk_file_filter_set_name (filter, filter_name);
+		gtk_file_filter_add_mime_type (filter, mine_type);
+		gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), filter);
+	}
+	return dialog;
+}
+
 static void  on_create_torrent_response (GtkWidget* dialog, gint response, UgtkApp* app)
 {
 	gchar*  file;
@@ -1309,6 +1332,24 @@ static void  on_create_torrent_response (GtkWidget* dialog, gint response, UgtkA
 	file = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 //	file = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (dialog));
 	gtk_widget_destroy (dialog);
+	ugtk_app_create_download (app, _("New Torrent"), file);
+	g_free (file);
+}
+
+static void  on_create_torrent_native_response (GtkFileChooserNative* dialog, gint response, UgtkApp* app)
+{
+	gchar*  file;
+
+	if (response != GTK_RESPONSE_ACCEPT ) {
+		g_object_unref (dialog);
+		return;
+	}
+
+	GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
+	// get filename
+	file = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+//	file = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (dialog));
+	g_object_unref (dialog);
 	ugtk_app_create_download (app, _("New Torrent"), file);
 	g_free (file);
 }
@@ -1331,17 +1372,27 @@ static void  on_create_metalink_response (GtkWidget* dialog, gint response, Ugtk
 
 void  ugtk_app_create_torrent (UgtkApp* app)
 {
-	GtkWidget*  dialog;
+//	GtkWidget*  dialog;
 	gchar*      title;
 
 	title = g_strconcat (UGTK_APP_NAME " - ", _("Open Torrent file"), NULL);
-	dialog = create_file_chooser (app->window.self,
+////	dialog = create_file_chooser (app->window.self,
+////			GTK_FILE_CHOOSER_ACTION_OPEN,
+////			title, _("Torrent file (*.torrent)"), "application/x-bittorrent");
+////	g_free (title);
+////	g_signal_connect (dialog, "response",
+////			G_CALLBACK (on_create_torrent_response), app);
+////	gtk_widget_show (dialog);
+
+	GtkFileChooserNative *native = create_native_file_chooser(app->window.self,
 			GTK_FILE_CHOOSER_ACTION_OPEN,
 			title, _("Torrent file (*.torrent)"), "application/x-bittorrent");
 	g_free (title);
-	g_signal_connect (dialog, "response",
-			G_CALLBACK (on_create_torrent_response), app);
-	gtk_widget_show (dialog);
+
+	gtk_native_dialog_show (GTK_NATIVE_DIALOG (native));
+
+	g_signal_connect (native, "response",
+			G_CALLBACK (on_create_torrent_native_response), app);
 }
 
 void  ugtk_app_create_metalink (UgtkApp* app)

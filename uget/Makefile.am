@@ -8,7 +8,7 @@
 noinst_LIBRARIES = libuget.a
 
 libuget_a_CPPFLAGS = -I$(top_srcdir)/uglib  -I$(top_srcdir)/uget
-libuget_a_CFLAGS   = @PTHREAD_CFLAGS@  @GLIB_CFLAGS@
+libuget_a_CFLAGS   = @PTHREAD_CFLAGS@  @GLIB_CFLAGS@ @LIBCRYPTO_CFLAGS@ @LIBGCRYPT_CFLAGS@
 
 libuget_a_SOURCES = \
 	UgetSequence.c  \

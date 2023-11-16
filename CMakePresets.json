@@ -1,0 +1,74 @@
+{
+    "version": 3,
+    "vendor": {
+        "conan": {}
+    },
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 15,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "Debug",
+            "displayName": "'Debug' config",
+            "description": "'Debug' configure using 'Ninja' generator",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "binaryDir": "${sourceDir}/build"
+        },
+        {
+            "name": "Release",
+            "displayName": "'Release' config",
+            "description": "'Release' configure using 'Ninja' generator",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "binaryDir": "${sourceDir}/build"
+        },
+        {
+            "name": "RelWithDebInfo",
+            "displayName": "'RelWithDebInfo' config",
+            "description": "'RelWithDebInfo' configure using 'Ninja' generator",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            },
+            "binaryDir": "${sourceDir}/build"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "Debug",
+            "configurePreset": "Debug"
+        },
+        {
+            "name": "Release",
+            "configurePreset": "Release"
+        },
+        {
+            "name": "RelWithDebInfo",
+            "configurePreset": "RelWithDebInfo"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "Debug",
+            "configurePreset": "Debug"
+        },
+        {
+            "name": "Release",
+            "configurePreset": "Release"
+        },
+        {
+            "name": "RelWithDebInfo",
+            "configurePreset": "RelWithDebInfo"
+        }
+    ]
+}

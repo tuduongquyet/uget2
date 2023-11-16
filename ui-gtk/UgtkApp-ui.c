@@ -40,7 +40,35 @@
 #include <UgtkNodeView.h>
 #include <gdk/gdk.h>        // GdkScreen
 
+#if defined (GDK_WINDOWING_X11)
+#include <gdk/gdkx.h>
+#elif defined (GDK_WINDOWING_WIN32)
+#include <gdk/gdkwin32.h>
+#elif defined (GDK_WINDOWING_QUARTZ)
+#include <gdk/gdkquartz.h>
+#endif
+
 #include <glib/gi18n.h>
+
+#ifdef GDK_WINDOWING_QUARTZ
+#import <AppKit/AppKit.h>
+#import <Cocoa/Cocoa.h>
+#include <gtkosxapplication.h>
+
+@interface NSWindow(ForwardDeclarations)
++ (void)setAllowsAutomaticWindowTabbing:(BOOL)allow;
+@end
+
+    static gboolean  uget_osx_focus_window          (gpointer);
+
+static gboolean
+uget_osx_focus_window (gpointer user_data)
+{
+[NSApp activateIgnoringOtherApps:YES];
+return FALSE;
+}
+
+#endif /* GDK_WINDOWING_QUARTZ */
 
 static void ugtk_statusbar_init_ui (struct UgtkStatusbar* app_statusbar);
 static void ugtk_toolbar_init_ui   (struct UgtkToolbar* app_toolbar, GtkAccelGroup* accel_group);
@@ -75,6 +103,19 @@ void  ugtk_app_init_ui (UgtkApp* app)
 	ugtk_toolbar_init_ui (&app->toolbar, app->accel_group);
 	ugtk_window_init_ui (&app->window, app);
 	ugtk_app_init_size (app);
+
+#ifdef GDK_WINDOWING_QUARTZ
+    /* Before the first window is created (typically the splash window),
+     * we need to disable automatic tabbing behavior introduced on Sierra.
+     * This is known to cause all kinds of weird issues (see for instance
+     * Bugzilla #776294) and needs proper GTK+ support if we would want to
+     * enable it.
+     */
+    if ([NSWindow respondsToSelector:@selector(setAllowsAutomaticWindowTabbing:)])
+    [NSWindow setAllowsAutomaticWindowTabbing:NO];
+
+    g_idle_add (uget_osx_focus_window, NULL);
+#endif /* GDK_WINDOWING_QUARTZ */
 }
 
 // set default size
@@ -204,6 +245,10 @@ static void ugtk_window_init_ui (struct UgtkWindow* window, UgtkApp* app)
 
 	gtk_box_pack_start (vbox, GTK_WIDGET (app->statusbar.self), FALSE, FALSE, 0);
 	gtk_widget_show_all ((GtkWidget*) vbox);
+
+#ifdef GDK_WINDOWING_QUARTZ
+	gtk_widget_hide(app->menubar.self);
+#endif
 }
 
 // ----------------------------------------------------------------------------
