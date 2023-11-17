@@ -103,6 +103,7 @@ void  ugtk_app_init_ui (UgtkApp* app)
 	ugtk_toolbar_init_ui (&app->toolbar, app->accel_group);
 	ugtk_window_init_ui (&app->window, app);
 	ugtk_app_init_size (app);
+	gtk_window_set_position(app->window.self, GTK_WIN_POS_CENTER);
 
 #ifdef GDK_WINDOWING_QUARTZ
     /* Before the first window is created (typically the splash window),
